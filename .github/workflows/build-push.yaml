@@ -1,0 +1,108 @@
+name: Build and Publish Images
+
+on:
+  workflow_dispatch:
+
+jobs:
+  # 各架构在对应 runner 上原生构建 按 digest 推送
+  build:
+    runs-on: ${{ matrix.arch.runner }}
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: [mac, linux]
+        arch:
+          - platform: linux/amd64
+            runner: ubuntu-latest
+            suffix: amd64
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+            suffix: arm64
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get lowercase owner
+        id: vars
+        run: echo "owner=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push by digest
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.variant }}.dockerfile
+          platforms: ${{ matrix.arch.platform }}
+          outputs: type=image,name=ghcr.io/${{ steps.vars.outputs.owner }}/devbox-${{ matrix.variant }},push-by-digest=true,name-canonical=true,push=true
+          cache-from: type=gha,scope=${{ matrix.variant }}-${{ matrix.arch.suffix }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.variant }}-${{ matrix.arch.suffix }}
+
+      - name: Export digest
+        run: |
+          mkdir -p /tmp/digests
+          echo "${{ steps.build.outputs.digest }}" > "/tmp/digests/${{ matrix.arch.suffix }}"
+
+      - name: Upload digest
+        uses: actions/upload-artifact@v4
+        with:
+          name: digests-${{ matrix.variant }}-${{ matrix.arch.suffix }}
+          path: /tmp/digests/${{ matrix.arch.suffix }}
+          retention-days: 1
+
+  # 合并两个架构为一个 manifest list latest指向最后一次构建 历史用sha缩写找
+  merge:
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: [mac, linux]
+
+    steps:
+      - name: Download digests
+        uses: actions/download-artifact@v4
+        with:
+          pattern: digests-${{ matrix.variant }}-*
+          path: /tmp/digests
+          merge-multiple: true
+
+      - name: Get lowercase owner and short sha
+        id: vars
+        run: |
+          echo "owner=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+          echo "sha=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create manifest list
+        working-directory: /tmp/digests
+        run: |
+          image="ghcr.io/${{ steps.vars.outputs.owner }}/devbox-${{ matrix.variant }}"
+          docker buildx imagetools create \
+            -t "$image:latest" \
+            -t "$image:${{ steps.vars.outputs.sha }}" \
+            "$image@$(cat amd64)" \
+            "$image@$(cat arm64)"
+          docker buildx imagetools inspect "$image:latest"
