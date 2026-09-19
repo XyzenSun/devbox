@@ -69,6 +69,24 @@ RUN curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
     && npm install -g typescript ts-node \
     && npm cache clean --force
 
+# shell增强： 补全 (bash-completion) 
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends bash-completion \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && printf '%s\n' \
+        '' \
+        '# bash-completion: 终端窗口(交互式非登录 shell)也启用补全' \
+        'if ! shopt -oq posix; then' \
+        '    if [ -f /usr/share/bash-completion/bash_completion ]; then' \
+        '        . /usr/share/bash-completion/bash_completion' \
+        '    elif [ -f /etc/bash_completion ]; then' \
+        '        . /etc/bash_completion' \
+        '    fi' \
+        'fi' \
+        >> /etc/bash.bashrc
+
 # AI工具
 
 # 备份 /root，防止 volume 挂载覆盖镜像内文件
