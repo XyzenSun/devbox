@@ -45,7 +45,7 @@ docker compose -f docker-compose.custom.yml up -d --build
 | --- | --- |
 | `PI_WEB_PASSWORD` | pi-web 登录密码，默认 `devbox-pi-web` |
 | `GIT_USER_NAME` / `GIT_USER_EMAIL` | 启动时写入容器内 Git 全局配置 |
-| `GIT_SSH_PRIVATE_KEY` | 写入 `/root/.ssh/id_ed25519` 的私钥内容 |
-| `SSH_PUBLIC_KEY` | 追加到 `/root/.ssh/authorized_keys` |
+| `SSH_PRIVATE_KEY` | 写入 `/root/.ssh/id_ed25519` 的私钥内容（容器出站 SSH，git 走 `~/.ssh` 自动使用）；未填 `SSH_PUBLIC_KEY` 时自动从它导出公钥 |
+| `SSH_PUBLIC_KEY` | 写入 `/root/.ssh/authorized_keys` 与 `/root/.ssh/id_ed25519.pub`；留空则由 `SSH_PRIVATE_KEY` 自动派生，无需手填以免粘贴出错 |
 | `ROOT_PASSWORD` | root 密码，设置后才开启 SSH 密码登录，否则仅密钥登录 |
 | `SSH_PORT` | 容器内 sshd 监听端口，默认 22222 |
