@@ -21,13 +21,14 @@ services:
       PI_WEB_PASSWORD: devbox-pi-web
       GIT_USER_NAME: git
       GIT_USER_EMAIL: git@git.com
-      # SSH 私钥 多行值用块语法 按需取消注释
-      # GIT_SSH_PRIVATE_KEY: |
+      # root 用户 SSH 私钥 写入容器 /root/.ssh/id_ed25519 供出站 SSH (git 等) 使用
+      # 多行值用块语法 内容行必须比键多缩进 按需取消注释
+      # SSH_PRIVATE_KEY: |
       #   -----BEGIN OPENSSH PRIVATE KEY-----
       #   ...
-      # SSH authorized_keys 公钥 按需取消注释
+      # SSH authorized_keys 公钥 谁能 ssh 登录 devbox 按需取消注释
       # SSH_PUBLIC_KEY: ssh-ed25519 AAAA...
       # root 密码 设了才开 SSH 密码登录 不设则仅密钥登录
       # ROOT_PASSWORD: change-me
-      # SSH 端口 默认 22222
+      # SSH 端口 默认 22222 不设即默认
       # SSH_PORT: "22222"

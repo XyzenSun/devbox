@@ -33,10 +33,10 @@ if [ -n "${GIT_USER_EMAIL:-}" ]; then
     git config --global user.email "$GIT_USER_EMAIL"
 fi
 
-# --- Git 用 SSH 私钥 ---
-if [ -n "${GIT_SSH_PRIVATE_KEY:-}" ]; then
+# --- root 用户 SSH 私钥 写入 /root/.ssh 供容器出站 SSH (git 等) 使用 ---
+if [ -n "${SSH_PRIVATE_KEY:-}" ]; then
     mkdir -p /root/.ssh && chmod 700 /root/.ssh
-    printf '%s\n' "$GIT_SSH_PRIVATE_KEY" > /root/.ssh/id_ed25519
+    printf '%s\n' "$SSH_PRIVATE_KEY" > /root/.ssh/id_ed25519
     chmod 600 /root/.ssh/id_ed25519
 fi
 

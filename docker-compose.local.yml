@@ -24,7 +24,7 @@ services:
       GIT_USER_NAME: git
       GIT_USER_EMAIL: git@git.com
       # SSH 私钥 多行值用块语法 按需取消注释
-      # GIT_SSH_PRIVATE_KEY: |
+      # SSH_PRIVATE_KEY: |
       #   -----BEGIN OPENSSH PRIVATE KEY-----
       #   ...
       # SSH authorized_keys 公钥 按需取消注释
