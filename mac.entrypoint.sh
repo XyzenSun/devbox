@@ -44,12 +44,14 @@ if [ -n "${SSH_PRIVATE_KEY:-}" ]; then
     chmod 600 /root/.ssh/id_ed25519
 fi
 
-# --- SSH authorized_keys ---
+# --- SSH 公钥 authorized_keys 与 /root/.ssh/id_ed25519.pub 同步写入 ---
 if [ -n "${SSH_PUBLIC_KEY:-}" ]; then
     mkdir -p /root/.ssh && chmod 700 /root/.ssh
     grep -qxF "$SSH_PUBLIC_KEY" /root/.ssh/authorized_keys 2>/dev/null \
         || printf '%s\n' "$SSH_PUBLIC_KEY" >> /root/.ssh/authorized_keys
     chmod 600 /root/.ssh/authorized_keys
+    # .pub 每次覆盖写入 幂等; 与 SSH_PRIVATE_KEY 填同一对钥匙时 /root/.ssh 下公私钥成对
+    printf '%s\n' "$SSH_PUBLIC_KEY" > /root/.ssh/id_ed25519.pub
 fi
 
 # --- SSH 密码 设了 ROOT_PASSWORD 才开密码登录 ---
