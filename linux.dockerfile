@@ -26,33 +26,33 @@ RUN git config --system tag.gpgSign false \
 
 # 安装语言环境 运行时
 
-ENV PATH=$PATH:/usr/local/go/bin:/root/go/bin:/root/.local/bin
 
 # 配置Python 解除 system pip limit 配置pip镜像
 
 ENV PIP_BREAK_SYSTEM_PACKAGES=1
 
 RUN apt-get install -y --no-install-recommends  python3 python3-pip \
-    && pip3 config set --global global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
+    && pip3 config set --global global.index-url https://mirrors.aliyun.com/pypi/simple/ \
+    && apt-get autoremove -y \
+    && apt-get clean
 
-# GO 安装与配置国内镜像和工具链 自适应架构
+# GO 安装与配置国内镜像和工具链 自适应架构与最新稳定版
 
-ARG GOLANG_VERSION=1.27.1
+ENV PATH=$PATH:/usr/local/go/bin:/root/go/bin:/root/.local/bin \
+    GOPATH=/root/go
 
-RUN arch="$(dpkg --print-architecture)" \
-    && wget -q https://go.dev/dl/go${GOLANG_VERSION}.linux-${arch}.tar.gz \
-    && tar -C /usr/local -xzf go${GOLANG_VERSION}.linux-${arch}.tar.gz \
-    && rm -f go${GOLANG_VERSION}.linux-${arch}.tar.gz \
+# 从官方 API 获取最新稳定版号, 避免手动维护版本
+RUN go_version="$(curl -fsSL 'https://go.dev/dl/?mode=json' | grep -oE '"version": ?"go[0-9]+\.[0-9]+\.[0-9]+"' | head -1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')" \
+    && arch="$(dpkg --print-architecture)" \
+    && wget -q https://go.dev/dl/go${go_version}.linux-${arch}.tar.gz \
+    && tar -C /usr/local -xzf go${go_version}.linux-${arch}.tar.gz \
+    && rm -f go${go_version}.linux-${arch}.tar.gz \
     && go env -w GOPROXY=https://goproxy.cn,direct \
     && go install -v golang.org/x/tools/gopls@latest \
     && go install -v github.com/go-delve/delve/cmd/dlv@latest \
     && go install -v honnef.co/go/tools/cmd/staticcheck@latest \
     && go clean -modcache \
     && go clean -cache
-
-# 配置GOPATH
-
-ENV  GOPATH=/root/go
 
 #配置Nodejs与TS 配置镜像源
 RUN curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
@@ -83,6 +83,24 @@ RUN apt-get update \
 
 # AI工具
 
+## PI及其依赖与webui安装
+# fd-find ripgrep 为 PI 运行时依赖, Debian 的 fd-find 包二进制名为 fdfind, 软链成 fd 方便 shell 直接调用
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends fd-find ripgrep \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && ln -s /usr/bin/fdfind /usr/local/bin/fd \
+    && npm install -g @earendil-works/pi-coding-agent \
+    && npm install -g @agegr/pi-web \
+    && npm cache clean --force
+#PI Web 配置 (默认值, SSH 登录 shell 由 entrypoint 桥接写入 /etc/environment, 运行时 -e 可覆盖)
+ENV PORT=10001 \
+    PI_WEB_HOSTNAME=0.0.0.0 \
+    PI_WEB_NO_OPEN=1 \
+    PI_WEB_PASSWORD=devbox-pi-web
+## PI插件安装
+RUN pi install npm:@xyzensun/pi-sync
+
 # 备份 /root，防止 volume 挂载覆盖镜像内文件
 RUN set -eux; \
     mkdir -p /root-defaults; \
@@ -93,5 +111,5 @@ COPY linux.entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 WORKDIR /workspace
-EXPOSE 22222
+EXPOSE 22222 10001
 CMD ["/usr/local/bin/entrypoint.sh"]

@@ -9,6 +9,26 @@ cp -an /root-defaults/. /root/ 2>/dev/null || true
 # --- 缓存目录 不挂载 走容器内文件系统 随容器删除一起回收 ---
 mkdir -p /cache/go-mod /cache/go-build /cache/npm /cache/pip
 
+# --- 桥接环境变量到 SSH 登录 shell ---
+# sshd 为登录 shell 构建最小环境, 不传播容器 ENV 与 -e 注入的变量,
+# 写入 /etc/environment 由 pam_env 在每次登录时加载, 每次启动重写 幂等
+# 取值来自容器环境最终值(镜像 ENV 与 docker run -e 合并结果), 兜底值仅为防御
+cat > /etc/environment <<EOF
+LANG=${LANG:-C.UTF-8}
+LANGUAGE=${LANGUAGE:-C.UTF-8}
+PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES:-1}
+GOMODCACHE=${GOMODCACHE:-/cache/go-mod}
+GOCACHE=${GOCACHE:-/cache/go-build}
+npm_config_cache=${npm_config_cache:-/cache/npm}
+PIP_CACHE_DIR=${PIP_CACHE_DIR:-/cache/pip}
+PORT=${PORT:-10001}
+PI_WEB_HOSTNAME=${PI_WEB_HOSTNAME:-0.0.0.0}
+PI_WEB_NO_OPEN=${PI_WEB_NO_OPEN:-1}
+PI_WEB_PASSWORD=${PI_WEB_PASSWORD:-}
+GOPATH=${GOPATH:-/root/go}
+PATH=${PATH}
+EOF
+
 # --- Git ---
 if [ -n "${GIT_USER_NAME:-}" ]; then
     git config --global user.name "$GIT_USER_NAME"

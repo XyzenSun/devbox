@@ -1,0 +1,35 @@
+# 本地构建版 直接使用仓库里的 linux.dockerfile
+# 用法: docker compose -f docker-compose.local.yml up -d --build
+
+services:
+  devbox:
+    build:
+      context: .
+      dockerfile: linux.dockerfile
+    image: devbox-linux:local
+    container_name: devbox
+    restart: unless-stopped
+    ports:
+      # SSH
+      - "22222:22222"
+      # PI Web
+      - "10001:10001"
+    volumes:
+      # /root 含全部缓存与配置 bind 到宿主机 Linux 原生文件系统无额外开销
+      - ./data/root:/root
+      # 代码目录
+      - ./workspace:/workspace
+    environment:
+      PI_WEB_PASSWORD: devbox-pi-web
+      GIT_USER_NAME: git
+      GIT_USER_EMAIL: git@git.com
+      # SSH 私钥 多行值用块语法 按需取消注释
+      # GIT_SSH_PRIVATE_KEY: |
+      #   -----BEGIN OPENSSH PRIVATE KEY-----
+      #   ...
+      # SSH authorized_keys 公钥 按需取消注释
+      # SSH_PUBLIC_KEY: ssh-ed25519 AAAA...
+      # root 密码 设了才开 SSH 密码登录 不设则仅密钥登录
+      # ROOT_PASSWORD: change-me
+      # SSH 端口 默认 22222
+      # SSH_PORT: "22222"
