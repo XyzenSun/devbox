@@ -38,6 +38,11 @@ if [ -n "${SSH_PRIVATE_KEY:-}" ]; then
     mkdir -p /root/.ssh && chmod 700 /root/.ssh
     printf '%s\n' "$SSH_PRIVATE_KEY" > /root/.ssh/id_ed25519
     chmod 600 /root/.ssh/id_ed25519
+    # 未显式提供公钥时 从私钥导出 避免手工粘贴公钥出错
+    if [ -z "${SSH_PUBLIC_KEY:-}" ]; then
+        SSH_PUBLIC_KEY="$(ssh-keygen -y -f /root/.ssh/id_ed25519 2>/dev/null || true)"
+        [ -n "$SSH_PUBLIC_KEY" ] || echo "[devbox] 警告: SSH_PRIVATE_KEY 无法导出公钥 (可能带 passphrase), 已跳过 authorized_keys 写入" >&2
+    fi
 fi
 
 # --- SSH 公钥 authorized_keys 与 /root/.ssh/id_ed25519.pub 同步写入 ---
