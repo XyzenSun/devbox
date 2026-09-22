@@ -101,14 +101,16 @@ ENV PORT=10001 \
 ## PI插件安装
 RUN pi install npm:@xyzensun/pi-sync
 
+# 入口脚本 启动时恢复 /root 并注入 git ssh 配置
+# devbox 容器内管理命令 pi-web 启停 与 pi 进程一键清理
+COPY linux.entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY internal-scripts/devbox.sh /usr/local/bin/devbox
+RUN chmod +x /usr/local/bin/entrypoint.sh /usr/local/bin/devbox
+
 # 备份 /root，防止 volume 挂载覆盖镜像内文件
 RUN set -eux; \
     mkdir -p /root-defaults; \
     cp -a /root/. /root-defaults/
-
-# 入口脚本 启动时恢复 /root 并注入 git ssh 配置
-COPY linux.entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
 
 WORKDIR /workspace
 EXPOSE 22222 10001
