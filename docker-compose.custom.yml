@@ -29,6 +29,8 @@ services:
       # 额外信任的 Host 名 逗号分隔 精确匹配 域名/反代访问公网时必须声明 否则 next 拒绝请求(Untrusted request)
       # 例: 通过 https://devbox.example.com 访问时填 PI_WEB_ALLOWED_HOSTS: devbox.example.com
       # PI_WEB_ALLOWED_HOSTS: devbox.example.com
+      # 容器启动时自动运行 pi-web (devbox pi-web restart 幂等) 默认不自动
+      # PI_WEB_AUTO_RUN: "true"
       # SSH 私钥 多行值用块语法 按需取消注释
       # SSH_PRIVATE_KEY: |
       #   -----BEGIN OPENSSH PRIVATE KEY-----

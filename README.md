@@ -46,6 +46,7 @@ docker compose -f docker-compose.custom.yml up -d --build
 | `PI_WEB_PASSWORD` | pi-web 登录密码，默认 `devbox-pi-web` |
 | `PI_WEB_PORT` | pi-web 监听端口，默认 `10001`，需与 compose `ports` 的容器侧映射保持一致 |
 | `PI_WEB_ALLOWED_HOSTS` | 额外信任的 Host 名，逗号分隔、精确匹配。通过域名或反向代理暴露到公网时必须声明，否则 Next.js 校验 Host 头失败会拒绝请求（Untrusted request），例如用 `https://devbox.example.com` 访问时填 `devbox.example.com` |
+| `PI_WEB_AUTO_RUN` | 设为 `true`/`1`/`yes`/`on` 时，容器启动即自动运行 pi-web（内部执行 `devbox pi-web restart`，幂等），默认不自动 |
 | `GIT_USER_NAME` / `GIT_USER_EMAIL` | 启动时写入容器内 Git 全局配置 |
 | `SSH_PRIVATE_KEY` | 写入 `/root/.ssh/id_ed25519` 的私钥内容（容器出站 SSH，git 走 `~/.ssh` 自动使用）；未填 `SSH_PUBLIC_KEY` 时自动从它导出公钥 |
 | `SSH_PUBLIC_KEY` | 写入 `/root/.ssh/authorized_keys` 与 `/root/.ssh/id_ed25519.pub`；留空则由 `SSH_PRIVATE_KEY` 自动派生，无需手填以免粘贴出错 |

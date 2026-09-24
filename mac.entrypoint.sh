@@ -75,6 +75,15 @@ Port ${SSH_PORT:-22222}
 PasswordAuthentication ${SSH_PASSWORD_AUTH}
 EOF
 
+# --- pi-web 自动启动 (PI_WEB_AUTO_RUN=true/1/yes/on 时开启) ---
+# 容器无 systemd, 启动即拉起 pi-web 常驻; restart 幂等安全
+# 失败仅告警不阻断 sshd, 稍后可手动 devbox pi-web start
+case "$(printf '%s' "${PI_WEB_AUTO_RUN:-0}" | tr '[:upper:]' '[:lower:]')" in
+    true|1|yes|on)
+        devbox pi-web restart || echo "[devbox] 警告: pi-web 自动启动失败, 可稍后手动执行: devbox pi-web start" >&2
+        ;;
+esac
+
 # --- 启动 ---
 ssh-keygen -A >/dev/null 2>&1 || true
 exec /usr/sbin/sshd -D -e

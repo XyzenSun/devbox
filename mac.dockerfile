@@ -101,11 +101,13 @@ RUN apt-get update \
 #PI Web 配置 (默认值, SSH 登录 shell 由 entrypoint 桥接写入 /etc/environment, 运行时 -e 可覆盖)
 # PI_WEB_PORT 为自定义变量, 不用 PORT (太常见易与其他程序冲突), devbox.sh 启动时以 --port CLI 参数传入
 # PI_WEB_ALLOWED_HOSTS 声明额外信任的 Host 名, 通过域名/反代方式访问公网时必须配置, 否则 next 拒绝请求
+# PI_WEB_AUTO_RUN 设为 true/1/yes/on 时 entrypoint 启动即自动拉起 pi-web (devbox pi-web restart, 幂等)
 ENV PI_WEB_PORT=10001 \
     PI_WEB_HOSTNAME=0.0.0.0 \
     PI_WEB_NO_OPEN=1 \
     PI_WEB_PASSWORD=devbox-pi-web \
-    PI_WEB_ALLOWED_HOSTS=
+    PI_WEB_ALLOWED_HOSTS= \
+    PI_WEB_AUTO_RUN=false
 ## PI插件安装
 RUN pi install npm:@xyzensun/pi-sync
 
