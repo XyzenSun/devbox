@@ -24,6 +24,11 @@ services:
       PI_WEB_PASSWORD: devbox-pi-web
       GIT_USER_NAME: git
       GIT_USER_EMAIL: git@git.com
+      # pi-web 端口 默认 10001 需与上方 ports "10001:10001" 映射保持一致
+      # PI_WEB_PORT: "10001"
+      # 额外信任的 Host 名 逗号分隔 精确匹配 域名/反代访问公网时必须声明 否则 next 拒绝请求(Untrusted request)
+      # 例: 通过 https://devbox.example.com 访问时填 PI_WEB_ALLOWED_HOSTS: devbox.example.com
+      # PI_WEB_ALLOWED_HOSTS: devbox.example.com
       # SSH 私钥 多行值用块语法 按需取消注释
       # SSH_PRIVATE_KEY: |
       #   -----BEGIN OPENSSH PRIVATE KEY-----

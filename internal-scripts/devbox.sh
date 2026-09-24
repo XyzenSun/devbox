@@ -4,7 +4,7 @@
 set -eu
 
 PI_WEB_LOG="/root/.pi-web.log"
-PI_WEB_PORT="${PORT:-10001}"
+PI_WEB_PORT="${PI_WEB_PORT:-10001}"
 
 # 解析实际二进制路径, pgrep 按完整命令行匹配, 避免按进程名误杀无关程序
 PI_BIN="$(command -v pi 2>/dev/null || true)"
@@ -51,7 +51,8 @@ web_start() {
         return 0
     fi
     # nohup 脱离 SSH 会话的 SIGHUP, 容器无 systemd 故以此方式常驻
-    nohup "$PI_WEB_BIN" >>"$PI_WEB_LOG" 2>&1 &
+    # 端口走自定义变量 PI_WEB_PORT 并以 CLI 参数传入, 不依赖 PORT (该变量太常见易与其他程序冲突)
+    nohup "$PI_WEB_BIN" --port "$PI_WEB_PORT" >>"$PI_WEB_LOG" 2>&1 &
     web_pid=$!
     # 轮询端口等待就绪, 拿到任何 HTTP 响应(含 401 未认证)都算就绪
     waited=0

@@ -94,10 +94,13 @@ RUN apt-get update \
     && npm install -g @agegr/pi-web \
     && npm cache clean --force
 #PI Web 配置 (默认值, SSH 登录 shell 由 entrypoint 桥接写入 /etc/environment, 运行时 -e 可覆盖)
-ENV PORT=10001 \
+# PI_WEB_PORT 为自定义变量, 不用 PORT (太常见易与其他程序冲突), devbox.sh 启动时以 --port CLI 参数传入
+# PI_WEB_ALLOWED_HOSTS 声明额外信任的 Host 名, 通过域名/反代方式访问公网时必须配置, 否则 next 拒绝请求
+ENV PI_WEB_PORT=10001 \
     PI_WEB_HOSTNAME=0.0.0.0 \
     PI_WEB_NO_OPEN=1 \
-    PI_WEB_PASSWORD=devbox-pi-web
+    PI_WEB_PASSWORD=devbox-pi-web \
+    PI_WEB_ALLOWED_HOSTS=
 ## PI插件安装
 RUN pi install npm:@xyzensun/pi-sync
 
