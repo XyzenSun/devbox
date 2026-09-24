@@ -104,7 +104,7 @@ ENV PI_WEB_PORT=10001 \
     PI_WEB_ALLOWED_HOSTS= \
     PI_WEB_AUTO_RUN=false
 ## PI插件安装
-RUN pi install npm:@xyzensun/pi-sync
+RUN pi install npm:@xyzensun/pi-sync-pure
 
 # 入口脚本 启动时恢复 /root 并注入 git ssh 配置
 # devbox 容器内管理命令 pi-web 启停 与 pi 进程一键清理
