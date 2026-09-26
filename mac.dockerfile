@@ -111,8 +111,27 @@ ENV PI_WEB_PORT=10001 \
 ## PI插件安装
 RUN pi install npm:@xyzensun/pi-sync-pure
 
+# 网络工具 EasyTier: 预装 core 与 cli 但不随容器启动 需要时用 devbox easytier start 拉起
+# 版本固定便于镜像可复现 升级时改这个 ARG
+# 配置文件不预置 由使用者自行编写 /root/easytier/config/config.toml 避免网络密钥进入镜像层
+ARG EASYTIER_VERSION=2.6.4
+# EASYTIER_AUTO_RUN 设为 true/1/yes/on 时 entrypoint 启动即自动拉起 (devbox easytier restart 幂等)
+ENV EASYTIER_AUTO_RUN=false
+RUN set -eux; \
+    arch="$(dpkg --print-architecture)"; \
+    case "$arch" in \
+        amd64) easytier_asset="x86_64" ;; \
+        arm64) easytier_asset="aarch64" ;; \
+        *) echo "不支持的架构: $arch" >&2; exit 1 ;; \
+    esac; \
+    wget -q -O /tmp/easytier.zip "https://github.com/EasyTier/EasyTier/releases/download/v${EASYTIER_VERSION}/easytier-linux-${easytier_asset}-v${EASYTIER_VERSION}.zip"; \
+    unzip -q -o /tmp/easytier.zip -d /tmp/easytier; \
+    install -m 0755 "/tmp/easytier/easytier-linux-${easytier_asset}/easytier-core" /usr/local/bin/; \
+    install -m 0755 "/tmp/easytier/easytier-linux-${easytier_asset}/easytier-cli" /usr/local/bin/; \
+    rm -rf /tmp/easytier /tmp/easytier.zip
+
 # 入口脚本 启动时恢复 /root 并注入 git ssh 配置
-# devbox 容器内管理命令 pi-web 启停 与 pi 进程一键清理
+# devbox 容器内管理命令 pi-web / easytier 启停 与 pi 进程一键清理
 COPY mac.entrypoint.sh /usr/local/bin/entrypoint.sh
 COPY internal-scripts/devbox.sh /usr/local/bin/devbox
 RUN chmod +x /usr/local/bin/entrypoint.sh /usr/local/bin/devbox
@@ -123,5 +142,5 @@ RUN set -eux; \
     cp -a /root/. /root-defaults/
 
 WORKDIR /workspace
-EXPOSE 22222 10001
+EXPOSE 22222 10001 10010/tcp 10010/udp
 CMD ["/usr/local/bin/entrypoint.sh"]

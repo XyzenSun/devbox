@@ -84,6 +84,15 @@ case "$(printf '%s' "${PI_WEB_AUTO_RUN:-0}" | tr '[:upper:]' '[:lower:]')" in
         ;;
 esac
 
+# --- easytier 自动启动 (EASYTIER_AUTO_RUN=true/1/yes/on 时开启) ---
+# 与 pi-web 同一策略: 容器无 systemd, 启动即拉起常驻; restart 幂等安全
+# 配置由使用者自行编写, 未写配置时 start 会直接报错退出, 这里只告警不阻断 sshd
+case "$(printf '%s' "${EASYTIER_AUTO_RUN:-0}" | tr '[:upper:]' '[:lower:]')" in
+    true|1|yes|on)
+        devbox easytier restart || echo "[devbox] 警告: easytier 自动启动失败, 可稍后手动执行: devbox easytier start" >&2
+        ;;
+esac
+
 # --- 启动 ---
 ssh-keygen -A >/dev/null 2>&1 || true
 exec /usr/sbin/sshd -D -e

@@ -14,6 +14,9 @@ services:
       - "22222:22222"
       # PI Web
       - "10001:10001"
+      # EasyTier P2P 监听 需与配置文件里的 listeners 保持一致
+      - "10010:10010/tcp"
+      - "10010:10010/udp"
     volumes:
       # /root 含全部缓存与配置 bind 到宿主机 Linux 原生文件系统无额外开销
       - ./data/root:/root
@@ -30,6 +33,9 @@ services:
       # PI_WEB_ALLOWED_HOSTS: devbox.example.com
       # 容器启动时自动运行 pi-web (devbox pi-web restart 幂等) 默认不自动
       # PI_WEB_AUTO_RUN: "true"
+      # 容器启动时自动运行 easytier (devbox easytier restart 幂等) 默认不自动
+      # 需先自行编写 /root/easytier/config/config.toml 否则只告警不启动
+      # EASYTIER_AUTO_RUN: "true"
       # SSH 私钥 多行值用块语法 按需取消注释
       # SSH_PRIVATE_KEY: |
       #   -----BEGIN OPENSSH PRIVATE KEY-----
