@@ -17,6 +17,29 @@ RUN apt-get update \
     && apt-get autoremove -y \
     && apt-get clean
 
+# 从官方最新 release 安装 lazygit, 校验下载文件后再解包
+RUN set -eux; \
+    release_dir="$(mktemp -d)"; \
+    curl -fsSL -o "$release_dir/release.json" https://api.github.com/repos/jesseduffield/lazygit/releases/latest; \
+    version="$(grep -m1 -oE '"tag_name"[[:space:]]*:[[:space:]]*"v[0-9]+\.[0-9]+\.[0-9]+"' "$release_dir/release.json" | cut -d '"' -f4 | cut -c2-)"; \
+    test -n "$version"; \
+    case "$(dpkg --print-architecture)" in \
+        amd64) lazygit_arch=x86_64 ;; \
+        arm64) lazygit_arch=arm64 ;; \
+        *) echo '不支持的 lazygit 架构' >&2; exit 1 ;; \
+    esac; \
+    asset="lazygit_${version}_linux_${lazygit_arch}.tar.gz"; \
+    release_url="https://github.com/jesseduffield/lazygit/releases/download/v${version}"; \
+    curl -fsSL -o "$release_dir/$asset" "$release_url/$asset"; \
+    curl -fsSL -o "$release_dir/checksums.txt" "$release_url/checksums.txt"; \
+    checksum="$(awk -v asset="$asset" '$2 == asset { print }' "$release_dir/checksums.txt")"; \
+    test -n "$checksum"; \
+    (cd "$release_dir" && printf '%s\n' "$checksum" | sha256sum -c -); \
+    tar -xzf "$release_dir/$asset" -C "$release_dir" lazygit; \
+    install -m 0755 "$release_dir/lazygit" /usr/local/bin/lazygit; \
+    rm -rf "$release_dir"; \
+    lazygit --version
+
 # Git与SSH配置
 RUN git config --system tag.gpgSign false \
     && git config --system commit.gpgsign false \

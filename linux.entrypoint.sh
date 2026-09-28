@@ -6,6 +6,14 @@ set -eu
 # --- 恢复 /root 默认文件 防止 volume 挂载覆盖 ---
 cp -an /root-defaults/. /root/ 2>/dev/null || true
 
+# --- lazygit 默认中文配置 ---
+# /root 可能由宿主机挂载, 仅配置不存在时创建, 避免覆盖用户设置
+lazygit_config=/root/.config/lazygit/config.yml
+if [ ! -e "$lazygit_config" ]; then
+    mkdir -p /root/.config/lazygit
+    printf 'gui:\n  language: zh-CN\n' > "$lazygit_config"
+fi
+
 # --- 缓存目录 默认在/root 跟着 bind 持久化 ---
 mkdir -p /root/go/pkg/mod /root/.cache/go-build /root/.npm /root/.cache/pip
 
