@@ -40,6 +40,20 @@ RUN set -eux; \
     rm -rf "$release_dir"; \
     lazygit --version
 
+# crane 直接访问镜像仓库, 无需 Docker daemon; 只安装 crane, 不带其他工具
+RUN set -eux; \
+    release_dir="$(mktemp -d)"; \
+    case "$(dpkg --print-architecture)" in \
+        amd64) crane_arch=x86_64 ;; \
+        arm64) crane_arch=arm64 ;; \
+        *) echo '不支持的 crane 架构' >&2; exit 1 ;; \
+    esac; \
+    curl -fsSL -o "$release_dir/crane.tar.gz" \
+        "https://github.com/google/go-containerregistry/releases/latest/download/go-containerregistry_Linux_${crane_arch}.tar.gz"; \
+    tar -xzf "$release_dir/crane.tar.gz" -C "$release_dir" crane; \
+    install -m 0755 "$release_dir/crane" /usr/local/bin/crane; \
+    rm -rf "$release_dir"
+
 # Git与SSH配置
 RUN git config --system tag.gpgSign false \
     && git config --system commit.gpgsign false \
