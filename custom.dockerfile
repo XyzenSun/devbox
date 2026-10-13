@@ -14,6 +14,15 @@ RUN set -eux; \
     install -m 0755 /tmp/crane /usr/local/bin/crane; \
     rm -f /tmp/crane.tar.gz /tmp/crane
 
+# tshark 是 Wireshark 的命令行前端, 用于解析 pcap 与容器内实时抓包
+# wireshark-common 默认会询问是否给 dumpcap 加 setuid 以允许非 root 抓包, 容器内固定以 root 运行
+# 因此预置为 false 跳过交互提问, 也避免在镜像里留下可提权的 setuid 二进制
+RUN echo 'wireshark-common wireshark-common/install-setuid boolean false' | debconf-set-selections \
+    && apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends tshark \
+    && apt-get clean \
+    && tshark --version | head -1
+
 # 自定义 entrypoint 装到独立路径 不覆盖原镜像的 /usr/local/bin/entrypoint.sh
 # 由自定义脚本在执行完机器特有逻辑后委托原 entrypoint
 COPY custom.entrypoint.sh /usr/local/bin/custom-entrypoint.sh
